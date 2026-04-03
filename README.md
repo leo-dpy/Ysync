@@ -1,55 +1,29 @@
-Gestionnaire de Réservation de Ressources
-Présentation du Projet
-Ce projet consiste en une application web full-stack dédiée à la gestion et à la réservation des ressources (salles de cours et matériel pédagogique). L'objectif est de centraliser les réservations pour éviter les conflits d'emploi du temps et faciliter le suivi des stocks par l'administration.
+# 1. Le MVP (Minimum Viable Product)
 
-Durée du projet : 6 semaines
+**Authentification basique :** Deux rôles "Étudiant" et "Admin"
+**Gestion des ressources (CRUD) :** L'admin doit pouvoir créer, modifier et supprimer des salles ou du matos
+**Le système de réservation :** L'étudiant sélectionne une ressource, choisit une date et une plage horaire. L'appli doit vérifier qu'il n'y a pas de conflits
+**Le calendrier partagé :** Un visuel au mois ou à la semaine où on voit les disponibilités etc...
 
-Objectif : Livraison d'un MVP (Produit Minimum Viable) fonctionnel.
+# 2. La Stack Technique
 
-Fonctionnalités principales (MVP)
-Gestion des Utilisateurs
-Authentification avec distinction de deux rôles : Etudiant et Administrateur.
+**Front-end :** Blazor Server. Utilisation d'une bibliothèque comme MudBlazor ou Radzen. Ils ont des composants "Scheduler" ou "Calendar" déjà fait
+**Back-end :** Une API en ASP.NET
+**Base de données :** Une base SQL. La modélisation de la base de données (Tables : Utilisateurs, Ressources, Réservations)
 
-Consultation de l'historique des réservations personnelles.
+## 3. Les bonus pour exploser la note (si vous avez le temps)
 
-Administration des Ressources
-Interface CRUD (Création, Lecture, Mise à jour, Suppression) pour les salles.
+**Envoi d'emails auto :** Un mail de confirmation quand la réservation est validée, ou un rappel la veille
+**Règles métier poussées :** Empêcher un étudiant de réserver plus de 4 heures d'affilée, ou bloquer les réservations la nuit etc...
 
-Gestion de l'inventaire matériel (caméras, accessoires, câblage).
+## 4. Le plan d'attaque de conceptualisation
 
-Système de Réservation
-Sélection de la ressource par date et plage horaire.
+**_Semaine 1 :_** Création d'une première maquette graphique du site
 
-Algorithme de vérification automatique des disponibilités pour empêcher les doublons.
+**_Semaine 2 :_** Création de l'API et de la base de données (le back-end)
 
-Vue Calendrier : Affichage dynamique des réservations par semaine ou par mois.
+**_Semaine 3 & 4 :_** Création des écrans avec Blazor, connexion à l'API, mise en place du calendrier visuel
 
-Stack Technique
-Front-end : Blazor (WebAssembly ou Server)
+**_Semaine 5 :_** Gestion des conflits entre les salles
 
-Composants UI : MudBlazor ou Radzen (utilisation de bibliothèques de composants pour le Scheduler).
-
-Back-end : API ASP.NET Core.
-
-Accès aux données : Entity Framework Core.
-
-Base de données : SQL Server (ou SQLite pour la phase de prototypage).
-
-Organisation du développement (Roadmap)
-
-Semaine 1 : Conception, modélisation de la base de données et maquettage des écrans.
-
-Semaine 2 : Développement de l'API Back-end et intégration de la base de données.
-
-Semaine 3 & 4 : Développement du Front-end Blazor et intégration du calendrier interactif.
-
-Semaine 5 : Implémentation de la logique de gestion des conflits et tests unitaires.
-
-Semaine 6 : Correction des bugs, polissage de l'interface et préparation du support de soutenance.
-
-Extensions envisagées (Bonus)
-Envoi de courriels de confirmation automatiques (MailKit).
-
-Module de gestion des retours matériel via scan de QR Code.
-
-Application de règles métier spécifiques (limitation de la durée des réservations).
+**_Semaine 6 :_** Recherche des bugs et ajout des bonus
