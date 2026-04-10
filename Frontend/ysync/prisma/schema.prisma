@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Materiel {
+  Id          Int           @id @default(autoincrement())
+  Nom         String        @db.VarChar(100)
+  Marque      String?       @db.VarChar(100)
+  Caution     Decimal?      @db.Decimal(10, 2)
+  TagQrCode   String?       @unique(map: "TagQrCode") @db.VarChar(100)
+  EstActif    Boolean       @default(true)
+  Reservation Reservation[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Reservation {
+  Id            Int         @id @default(autoincrement())
+  UtilisateurId Int
+  SalleId       Int?
+  MaterielId    Int?
+  DateDebut     DateTime    @db.DateTime(0)
+  DateFin       DateTime    @db.DateTime(0)
+  Statut        String      @db.VarChar(50)
+  Utilisateur   Utilisateur @relation(fields: [UtilisateurId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "Reservation_ibfk_1")
+  Salle         Salle?      @relation(fields: [SalleId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "Reservation_ibfk_2")
+  Materiel      Materiel?   @relation(fields: [MaterielId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "Reservation_ibfk_3")
+
+  @@index([MaterielId], map: "MaterielId")
+  @@index([SalleId], map: "SalleId")
+  @@index([UtilisateurId], map: "UtilisateurId")
+}
+
+model Salle {
+  Id          Int           @id @default(autoincrement())
+  Nom         String        @db.VarChar(100)
+  Categorie   String        @db.VarChar(100)
+  Capacite    Int?
+  Reservation Reservation[]
+}
+
+model Utilisateur {
+  Id          Int           @id @default(autoincrement())
+  Nom         String        @db.VarChar(100)
+  Email       String        @unique(map: "Email") @db.VarChar(255)
+  Role        String        @db.VarChar(50)
+  Reservation Reservation[]
+}
