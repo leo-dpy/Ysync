@@ -1,0 +1,68 @@
+# --- 1. Build du Frontend (Blazor WASM) ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build-front
+WORKDIR /src
+COPY Frontend/BlazorApp/BlazorApp.csproj Frontend/BlazorApp/
+RUN dotnet restore Frontend/BlazorApp/BlazorApp.csproj
+COPY Frontend/BlazorApp/ Frontend/BlazorApp/
+WORKDIR /src/Frontend/BlazorApp
+RUN dotnet publish BlazorApp.csproj -c Release -o /app/publish
+
+# --- 2. Build du Backend (NestJS) ---
+FROM node:22-alpine AS build-back
+# OpenSSL est souvent nécessaire pour Prisma sous Alpine
+RUN apk add --no-cache openssl
+RUN npm i -g pnpm
+WORKDIR /app
+
+# Récupération des dépendances
+COPY Backend/ysync/package.json Backend/ysync/pnpm-lock.yaml ./
+COPY Backend/ysync/prisma ./prisma
+RUN pnpm install --frozen-lockfile
+
+# Copie du code et build
+COPY Backend/ysync/ ./
+RUN npx prisma generate
+RUN pnpm build
+
+# --- 3. Image finale ---
+FROM node:22-alpine
+RUN apk add --no-cache nginx supervisor openssl
+
+WORKDIR /app
+
+# Copie des fichiers compilés du backend
+COPY --from=build-back /app/dist ./dist
+COPY --from=build-back /app/node_modules ./node_modules
+COPY --from=build-back /app/package.json ./
+COPY --from=build-back /app/prisma ./prisma
+
+# Copie des fichiers compilés du frontend vers Nginx
+COPY --from=build-front /app/publish/wwwroot /usr/share/nginx/html
+
+# Configuration de Nginx (Sert le front sur / et redirige /api vers NestJS)
+RUN printf "server {\n\
+    listen 80;\n\
+    location / {\n\
+        root /usr/share/nginx/html;\n\
+        try_files \$uri \$uri/ /index.html;\n\
+    }\n\
+    location /api/ {\n\
+        proxy_pass http://127.0.0.1:3000/;\n\
+        proxy_set_header Host \$host;\n\
+        proxy_set_header X-Real-IP \$remote_addr;\n\
+    }\n\
+}\n" > /etc/nginx/http.d/default.conf
+
+# Configuration de Supervisor pour lancer les deux process
+RUN printf "[supervisord]\n\
+nodaemon=true\n\n\
+[program:node]\n\
+command=node dist/main\n\
+directory=/app\n\n\
+[program:nginx]\n\
+command=nginx -g 'daemon off;'\n" > /etc/supervisord.conf
+
+# On expose uniquement le port 80
+EXPOSE 80
+
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]
