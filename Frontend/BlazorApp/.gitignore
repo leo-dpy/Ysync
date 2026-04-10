@@ -3,4 +3,5 @@ obj/
 *.dll
 *.pdb
 *.wasm
-.vscode
+bin/
+obj/
