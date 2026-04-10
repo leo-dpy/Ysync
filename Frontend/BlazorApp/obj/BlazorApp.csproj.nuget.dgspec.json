@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\flori\\Documents\\GitHub\\Ysync\\Backend\\BlazorApp\\BlazorApp.csproj": {}
+    "C:\\Users\\flori\\Documents\\GitHub\\Ysync\\Frontend\\BlazorApp\\BlazorApp.csproj": {}
   },
   "projects": {
-    "C:\\Users\\flori\\Documents\\GitHub\\Ysync\\Backend\\BlazorApp\\BlazorApp.csproj": {
+    "C:\\Users\\flori\\Documents\\GitHub\\Ysync\\Frontend\\BlazorApp\\BlazorApp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\flori\\Documents\\GitHub\\Ysync\\Backend\\BlazorApp\\BlazorApp.csproj",
+        "projectUniqueName": "C:\\Users\\flori\\Documents\\GitHub\\Ysync\\Frontend\\BlazorApp\\BlazorApp.csproj",
         "projectName": "BlazorApp",
-        "projectPath": "C:\\Users\\flori\\Documents\\GitHub\\Ysync\\Backend\\BlazorApp\\BlazorApp.csproj",
+        "projectPath": "C:\\Users\\flori\\Documents\\GitHub\\Ysync\\Frontend\\BlazorApp\\BlazorApp.csproj",
         "packagesPath": "C:\\Users\\flori\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\flori\\Documents\\GitHub\\Ysync\\Backend\\BlazorApp\\obj\\",
+        "outputPath": "C:\\Users\\flori\\Documents\\GitHub\\Ysync\\Frontend\\BlazorApp\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
