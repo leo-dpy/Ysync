@@ -47,6 +47,7 @@ model Utilisateur {
   Id          Int           @id @default(autoincrement())
   Nom         String        @db.VarChar(100)
   Email       String        @unique(map: "Email") @db.VarChar(255)
+  MotDePasse  String        @db.VarChar(255)
   Role        String        @db.VarChar(50)
   Reservation Reservation[]
 }
