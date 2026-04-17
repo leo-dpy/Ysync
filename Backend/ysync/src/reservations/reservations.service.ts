@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ReservationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+  ) {}
 
   findAll(salleId?: number, materielId?: number) {
     return this.prisma.reservation.findMany({
@@ -33,6 +37,31 @@ export class ReservationsService {
     salleId?: number,
     materielId?: number,
   ) {
+    // ── Règle 1 : dateFin doit être après dateDebut ──
+    if (dateFin <= dateDebut) {
+      throw new BadRequestException('La date de fin doit être après la date de début');
+    }
+
+    // ── Règle 2 : max 4h d'affilée ──
+    const dureeMs = dateFin.getTime() - dateDebut.getTime();
+    const dureeHeures = dureeMs / (1000 * 60 * 60);
+    if (dureeHeures > 4) {
+      throw new BadRequestException('Une réservation ne peut pas dépasser 4 heures');
+    }
+
+    // ── Règle 3 : pas de réservation la nuit (22h → 7h) ──
+    const heureDebut = dateDebut.getHours();
+    const heureFin = dateFin.getHours();
+    const minutesFin = dateFin.getMinutes();
+
+    const debutNuit = heureDebut >= 22 || heureDebut < 7;
+    const finNuit = heureFin < 7 || (heureFin === 22 && minutesFin > 0) || heureFin > 22;
+
+    if (debutNuit || finNuit) {
+      throw new BadRequestException('Les réservations sont interdites entre 22h et 7h');
+    }
+
+    // ── Vérification de conflit ──
     const conflit = await this.prisma.reservation.findFirst({
       where: {
         ...(salleId && { SalleId: salleId }),
@@ -45,7 +74,8 @@ export class ReservationsService {
     });
     if (conflit) throw new ConflictException('Ce créneau est déjà réservé');
 
-    return this.prisma.reservation.create({
+    // ── Création de la réservation ──
+    const reservation = await this.prisma.reservation.create({
       data: {
         UtilisateurId: utilisateurId,
         SalleId: salleId ?? null,
@@ -54,7 +84,24 @@ export class ReservationsService {
         DateFin: dateFin,
         Statut: 'confirmée',
       },
+      include: {
+        Utilisateur: true,
+        Salle: true,
+        Materiel: true,
+      },
     });
+
+    // ── Envoi de l'email de confirmation ──
+    const ressource = reservation.Salle?.Nom ?? reservation.Materiel?.Nom ?? 'Ressource';
+    await this.mail.envoyerConfirmation(
+      reservation.Utilisateur.Email,
+      reservation.Utilisateur.Nom,
+      ressource,
+      dateDebut,
+      dateFin,
+    );
+
+    return reservation;
   }
 
   async remove(id: number, utilisateurId: number, role: string) {
