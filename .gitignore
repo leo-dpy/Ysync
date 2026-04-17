@@ -1,3 +1,67 @@
+# ==========================================
+# 1. OS & FICHIERS TEMPORAIRES
+# ==========================================
+.DS_Store
+.temp
+.tmp
+
+# ==========================================
+# 2. SÉCURITÉ & ENVIRONNEMENT (Crucial)
+# ==========================================
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# ==========================================
+# 3. ÉDITEURS & IDE (VSCode, IntelliJ, etc.)
+# ==========================================
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ==========================================
+# 4. BACK-END (NestJS / Node.js / Prisma)
+# ==========================================
+# Dépendances et Build
+node_modules/
+dist/
+build/
+generated/prisma/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Tests & Diagnostic
+coverage/
+.nyc_output/
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime Data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ==========================================
+# 5. FRONT-END (C# / Blazor WebAssembly)
+# ==========================================
 bin/
 obj/
 *.dll
