@@ -1,5 +1,5 @@
 @page "/materiels"
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin")]
 @inject MaterielsService MaterielsSvc
 
 <PageTitle>Matériels — YSync</PageTitle>

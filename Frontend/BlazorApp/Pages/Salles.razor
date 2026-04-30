@@ -1,5 +1,5 @@
 @page "/salles"
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin")]
 @inject SallesService SallesSvc
 @inject NavigationManager Nav
 
