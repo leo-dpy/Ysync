@@ -75,7 +75,7 @@ RUN printf "[supervisord]\n\
 nodaemon=true\n\
 user=root\n\n\
 [program:node]\n\
-command=sh -c \"npx prisma migrate deploy && node dist/main\"\n\
+command=sh -c \"npx prisma db push --accept-data-loss && node dist/main\"\n\
 directory=/app\n\
 autostart=true\n\
 autorestart=true\n\
