@@ -1,0 +1,85 @@
+@page "/reservations"
+@attribute [Authorize]
+@inject ReservationsService ReservationsSvc
+
+<PageTitle>Toutes les réservations — YSync</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title">Toutes les réservations</h1>
+    <p class="page-subtitle">Vue globale de toutes les réservations</p>
+</div>
+
+@if (loading)
+{
+    <p class="text-muted">Chargement...</p>
+}
+else if (!resas.Any())
+{
+    <div class="empty-state">
+        <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
+        <p class="empty-state-text">Aucune réservation enregistrée</p>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Ressource</th>
+                        <th>Début</th>
+                        <th>Fin</th>
+                        <th>Statut</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in resas.OrderByDescending(x => x.DateDebut))
+                    {
+                        <tr>
+                            <td>@(r.Utilisateur?.Nom ?? "—")</td>
+                            <td>@(r.Salle?.Nom ?? r.Materiel?.Nom ?? "—")</td>
+                            <td>@r.DateDebut.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@r.DateFin.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td><span class="badge badge-success">@r.Statut</span></td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" @onclick="() => AskDel(r)">✕</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<ConfirmDialog Visible="showDel" Title="Supprimer la réservation"
+    Message="Supprimer cette réservation ?"
+    OnConfirm="ConfirmDel" OnCancel="() => showDel = false" />
+
+@code {
+    private List<ReservationDto> resas = new();
+    private bool loading = true, showDel;
+    private ReservationDto? deleting;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        loading = true;
+        try { resas = await ReservationsSvc.GetAllAsync(); } catch { }
+        loading = false;
+    }
+
+    private void AskDel(ReservationDto r) { deleting = r; showDel = true; }
+
+    private async Task ConfirmDel()
+    {
+        showDel = false;
+        if (deleting == null) return;
+        try { await ReservationsSvc.DeleteAsync(deleting.Id); Toast.ShowSuccess("Réservation supprimée"); await Load(); }
+        catch (ApiException ex) { Toast.ShowError(ex.Message); }
+    }
+}
