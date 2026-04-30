@@ -8,3 +8,4 @@ import { MailService } from '../mail/mail.service';
   controllers: [ReservationsController],
   providers: [ReservationsService, PrismaService, MailService],
 })
+export class ReservationsModule {}
