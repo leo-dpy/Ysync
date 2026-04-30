@@ -1,0 +1,124 @@
+@page "/admin"
+@attribute [Authorize(Roles = "Admin")]
+@inject UsersService UsersSvc
+@inject AuthService AuthSvc
+@inject NavigationManager Nav
+
+<PageTitle>Administration — YSync</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title">Gestion des comptes</h1>
+    <p class="page-subtitle">Gérez les utilisateurs et leurs rôles</p>
+</div>
+
+@if (loading)
+{
+    <p class="text-muted">Chargement...</p>
+}
+else if (users == null || !users.Any())
+{
+    <div class="empty-state">
+        <p class="empty-state-text">Aucun utilisateur trouvé</p>
+    </div>
+}
+else
+{
+    <div class="card" style="padding:0;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse">
+            <thead>
+                <tr style="background:var(--bg-secondary,#f8f9fa)">
+                    <th style="padding:0.75rem 1rem;text-align:left;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted,#6b7280)">Nom</th>
+                    <th style="padding:0.75rem 1rem;text-align:left;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted,#6b7280)">Email</th>
+                    <th style="padding:0.75rem 1rem;text-align:left;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted,#6b7280)">Rôle</th>
+                    <th style="padding:0.75rem 1rem;text-align:right;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted,#6b7280)">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in users)
+                {
+                    <tr style="border-top:1px solid var(--border,#e5e7eb)">
+                        <td style="padding:0.75rem 1rem;font-weight:500">@u.Nom</td>
+                        <td style="padding:0.75rem 1rem;color:var(--text-muted,#6b7280)">@u.Email</td>
+                        <td style="padding:0.75rem 1rem">
+                            <span class="@(u.Role == "Admin" ? "badge-admin" : "badge-user")">@u.Role</span>
+                        </td>
+                        <td style="padding:0.75rem 1rem;text-align:right">
+                            <div class="flex flex-gap" style="justify-content:flex-end">
+                                @if (u.Id != currentUserId)
+                                {
+                                    @if (u.Role == "Admin")
+                                    {
+                                        <button class="btn btn-ghost btn-sm" @onclick="() => Retrograder(u)">Rétrograder</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-ghost btn-sm" @onclick="() => PromouvoirAdmin(u)">Promouvoir admin</button>
+                                    }
+                                    <button class="btn btn-danger btn-sm" @onclick="() => AskDelete(u)">Supprimer</button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted text-sm">Vous</span>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<ConfirmDialog Visible="showDeleteConfirm" Title="Supprimer le compte"
+    Message="@($"Supprimer le compte de « {deleting?.Nom} » ? Cette action est irréversible.")"
+    OnConfirm="ConfirmDelete" OnCancel="() => showDeleteConfirm = false" />
+
+@code {
+    private List<UserListDto>? users;
+    private bool loading = true, showDeleteConfirm;
+    private UserListDto? deleting;
+    private int currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var me = await AuthSvc.GetCurrentUserAsync();
+        if (me != null) currentUserId = me.Id;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try { users = await UsersSvc.GetAllAsync(); } catch { }
+        loading = false;
+    }
+
+    private Task Retrograder(UserListDto u) => ChangeRole(u, "Utilisateur");
+    private Task PromouvoirAdmin(UserListDto u) => ChangeRole(u, "Admin");
+
+    private async Task ChangeRole(UserListDto u, string newRole)
+    {
+        try
+        {
+            await UsersSvc.UpdateRoleAsync(u.Id, newRole);
+            Toast.ShowSuccess($"Rôle de {u.Nom} mis à jour");
+            await LoadData();
+        }
+        catch (ApiException ex) { Toast.ShowError(ex.Message); }
+    }
+
+    private void AskDelete(UserListDto u) { deleting = u; showDeleteConfirm = true; }
+
+    private async Task ConfirmDelete()
+    {
+        showDeleteConfirm = false;
+        if (deleting == null) return;
+        try
+        {
+            await UsersSvc.DeleteAsync(deleting.Id);
+            Toast.ShowSuccess($"Compte de {deleting.Nom} supprimé");
+            await LoadData();
+        }
+        catch (ApiException ex) { Toast.ShowError(ex.Message); }
+    }
+}

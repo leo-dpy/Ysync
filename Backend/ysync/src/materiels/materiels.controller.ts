@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { MaterielsService } from './materiels.service';
 import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @UseGuards(AuthGuard)
 @Controller('materiels')
@@ -17,16 +19,22 @@ export class MaterielsController {
     return this.materielsService.findOne(+id);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('Admin')
   @Post()
   create(@Body() body: { nom: string; marque?: string; caution?: number }) {
     return this.materielsService.create(body.nom, body.marque, body.caution);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('Admin')
   @Patch(':id')
   update(@Param('id') id: string, @Body() body: { nom?: string; marque?: string; caution?: number }) {
     return this.materielsService.update(+id, body.nom, body.marque, body.caution);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('Admin')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.materielsService.remove(+id);

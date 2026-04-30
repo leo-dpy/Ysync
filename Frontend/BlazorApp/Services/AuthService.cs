@@ -34,14 +34,13 @@ public class AuthService
         return response;
     }
 
-    public async Task<UserDto?> RegisterAsync(string nom, string email, string motDePasse, string role)
+    public async Task<UserDto?> RegisterAsync(string nom, string email, string motDePasse)
     {
         return await _api.PostNoAuthAsync<UserDto>("auth/register", new RegisterRequest
         {
             Nom = nom,
             Email = email,
             MotDePasse = motDePasse,
-            Role = role
         });
     }
 

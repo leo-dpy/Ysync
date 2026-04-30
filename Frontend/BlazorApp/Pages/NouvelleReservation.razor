@@ -93,8 +93,8 @@
         {
             var dto = new ReservationCreateDto
             {
-                DateDebut = dateDebut.ToString("o"),
-                DateFin = dateFin.ToString("o"),
+                DateDebut = dateDebut.ToString("yyyy-MM-ddTHH:mm:ss"),
+                DateFin = dateFin.ToString("yyyy-MM-ddTHH:mm:ss"),
                 SalleId = resType == "salle" && selectedSalleId > 0 ? selectedSalleId : null,
                 MaterielId = resType == "materiel" && selectedMaterielId > 0 ? selectedMaterielId : null
             };
