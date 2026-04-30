@@ -1,5 +1,5 @@
 @page "/reservations"
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin")]
 @inject ReservationsService ReservationsSvc
 
 <PageTitle>Toutes les réservations — YSync</PageTitle>

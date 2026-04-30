@@ -7,13 +7,13 @@ import * as bcrypt from 'bcrypt';
 export class AuthService {
   constructor(private prisma: PrismaService, private jwt: JwtService) {}
 
-  async register(nom: string, email: string, motDePasse: string, role: string) {
+  async register(nom: string, email: string, motDePasse: string) {
     const existe = await this.prisma.utilisateur.findUnique({ where: { Email: email } });
     if (existe) throw new ConflictException('Email déjà utilisé');
 
     const hash = await bcrypt.hash(motDePasse, 10);
     const user = await this.prisma.utilisateur.create({
-      data: { Nom: nom, Email: email, MotDePasse: hash, Role: role },
+      data: { Nom: nom, Email: email, MotDePasse: hash, Role: 'Utilisateur' },
     });
     return { id: user.Id, email: user.Email, role: user.Role };
   }

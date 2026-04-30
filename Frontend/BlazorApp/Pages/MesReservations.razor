@@ -29,7 +29,7 @@ else
     <div class="grid grid-2">
         @foreach (var r in resas.OrderByDescending(x => x.DateDebut))
         {
-            var past = r.DateFin < DateTime.Now;
+            var past = r.DateFin < DateTime.UtcNow;
             <div class="card" style="@(past ? "opacity:0.6" : "")">
                 <div class="flex-between mb-1">
                     <h3>@(r.Salle?.Nom ?? r.Materiel?.Nom ?? "Ressource")</h3>

@@ -30,6 +30,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<SallesService>();
 builder.Services.AddScoped<MaterielsService>();
 builder.Services.AddScoped<ReservationsService>();
+builder.Services.AddScoped<UsersService>();
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<CustomAuthStateProvider>();
