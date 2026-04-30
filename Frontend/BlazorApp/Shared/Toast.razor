@@ -1,0 +1,42 @@
+@implements IDisposable
+
+<div class="toast-container">
+    @foreach (var toast in _toasts)
+    {
+        <div class="toast @(toast.IsError ? "toast-error" : "toast-success")">
+            @if (toast.IsError) { <span>✕</span> } else { <span>✓</span> }
+            @toast.Message
+        </div>
+    }
+</div>
+
+@code {
+    private static event Action<string, bool>? OnShow;
+    private List<ToastItem> _toasts = new();
+
+    public static void ShowSuccess(string message) => OnShow?.Invoke(message, false);
+    public static void ShowError(string message) => OnShow?.Invoke(message, true);
+
+    protected override void OnInitialized()
+    {
+        OnShow += HandleShow;
+    }
+
+    private async void HandleShow(string message, bool isError)
+    {
+        var item = new ToastItem { Message = message, IsError = isError };
+        _toasts.Add(item);
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(3500);
+        _toasts.Remove(item);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => OnShow -= HandleShow;
+
+    private class ToastItem
+    {
+        public string Message { get; set; } = "";
+        public bool IsError { get; set; }
+    }
+}
