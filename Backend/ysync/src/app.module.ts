@@ -16,3 +16,4 @@ import { MailModule } from './mail/mail.module';
     ReservationsModule,
   ],
 })
+export class AppModule {}
