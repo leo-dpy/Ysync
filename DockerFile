@@ -52,6 +52,7 @@ RUN printf "server {\n\
     location / {\n\
         root /usr/share/nginx/html;\n\
         try_files \$uri \$uri/ /index.html;\n\
+        include /etc/nginx/mime.types;\n\
         types {\n\
             application/wasm wasm;\n\
         }\n\
