@@ -1,0 +1,123 @@
+@page "/materiels"
+@attribute [Authorize]
+@inject MaterielsService MaterielsSvc
+
+<PageTitle>Matériels — YSync</PageTitle>
+
+<div class="flex-between mb-3">
+    <div class="page-header" style="margin-bottom:0">
+        <h1 class="page-title">Matériels</h1>
+        <p class="page-subtitle">Gérez les matériels disponibles</p>
+    </div>
+    <button class="btn btn-primary" @onclick="OpenCreate">+ Ajouter</button>
+</div>
+
+@if (loading)
+{
+    <p class="text-muted">Chargement...</p>
+}
+else if (!materiels.Any())
+{
+    <div class="empty-state">
+        <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+        <p class="empty-state-text">Aucun matériel pour le moment</p>
+    </div>
+}
+else
+{
+    <div class="grid grid-3">
+        @foreach (var m in materiels)
+        {
+            <div class="card">
+                <h3 style="margin-bottom:0.25rem">@m.Nom</h3>
+                <p class="text-muted text-sm mb-1">@(m.Marque ?? "Sans marque")</p>
+                @if (m.Caution.HasValue)
+                {
+                    <p class="text-sm mb-2">Caution : <strong>@m.Caution.Value.ToString("F2") €</strong></p>
+                }
+                <div class="flex flex-gap">
+                    <button class="btn btn-ghost btn-sm" @onclick="() => OpenEdit(m)">Modifier</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => AskDelete(m)">Supprimer</button>
+                    <a href="/nouvelle-reservation" class="btn btn-primary btn-sm">Réserver</a>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (showModal)
+{
+    <div class="modal-overlay" @onclick="CloseModal">
+        <div class="modal-content" @onclick:stopPropagation>
+            <h3 class="modal-title">@(editing != null ? "Modifier" : "Ajouter") un matériel</h3>
+            <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input class="form-input" @bind="fNom" placeholder="Projecteur HD" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Marque</label>
+                <input class="form-input" @bind="fMarque" placeholder="Epson, Dell..." />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Caution (€)</label>
+                <input type="number" step="0.01" class="form-input" @bind="fCaution" />
+            </div>
+            @if (fError != null) { <div class="alert alert-error">@fError</div> }
+            <div class="modal-actions">
+                <button class="btn btn-ghost" @onclick="CloseModal">Annuler</button>
+                <button class="btn btn-primary" @onclick="Save">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+}
+
+<ConfirmDialog Visible="showDel" Title="Supprimer le matériel"
+    Message="@($"Supprimer « {deleting?.Nom} » ?")"
+    OnConfirm="ConfirmDel" OnCancel="() => showDel = false" />
+
+@code {
+    private List<MaterielDto> materiels = new();
+    private bool loading = true, showModal, showDel;
+    private MaterielDto? editing, deleting;
+    private string fNom = "", fMarque = "", fError;
+    private decimal fCaution;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        loading = true;
+        try { materiels = await MaterielsSvc.GetAllAsync(); } catch { }
+        loading = false;
+    }
+
+    private void OpenCreate() { editing = null; fNom = ""; fMarque = ""; fCaution = 0; fError = null; showModal = true; }
+    private void OpenEdit(MaterielDto m) { editing = m; fNom = m.Nom; fMarque = m.Marque ?? ""; fCaution = m.Caution ?? 0; fError = null; showModal = true; }
+    private void CloseModal() => showModal = false;
+
+    private async Task Save()
+    {
+        fError = null;
+        try
+        {
+            if (editing != null)
+                await MaterielsSvc.UpdateAsync(editing.Id, new MaterielUpdateDto { Nom = fNom, Marque = fMarque, Caution = fCaution });
+            else
+                await MaterielsSvc.CreateAsync(new MaterielCreateDto { Nom = fNom, Marque = fMarque, Caution = fCaution });
+            showModal = false;
+            Toast.ShowSuccess(editing != null ? "Matériel modifié" : "Matériel créé");
+            await Load();
+        }
+        catch (ApiException ex) { fError = ex.Message; }
+    }
+
+    private void AskDelete(MaterielDto m) { deleting = m; showDel = true; }
+
+    private async Task ConfirmDel()
+    {
+        showDel = false;
+        if (deleting == null) return;
+        try { await MaterielsSvc.DeleteAsync(deleting.Id); Toast.ShowSuccess("Matériel supprimé"); await Load(); }
+        catch (ApiException ex) { Toast.ShowError(ex.Message); }
+    }
+}

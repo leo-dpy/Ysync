@@ -1,0 +1,75 @@
+@page "/login"
+@layout BlazorApp.Layout.MainLayout
+@inject AuthService AuthSvc
+@inject NavigationManager Nav
+
+<PageTitle>Connexion — YSync</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <div class="auth-logo-text"><span class="auth-logo-y">Y</span><span class="auth-logo-sync">Sync</span></div>
+        </div>
+        <p class="auth-subtitle">Connectez-vous à votre compte</p>
+
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="alert alert-error">@error</div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="HandleLogin">
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" @bind="model.Email" placeholder="votre@email.com" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <input type="password" class="form-input" @bind="model.MotDePasse" placeholder="••••••••" required />
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" disabled="@loading">
+                @if (loading) { <span>Connexion...</span> } else { <span>Se connecter</span> }
+            </button>
+        </EditForm>
+
+        <div class="auth-footer">
+            Pas encore de compte ? <a href="/register">S'inscrire</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginRequest model = new();
+    private string? error;
+    private bool loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // If already logged in, go to dashboard
+        try
+        {
+            var user = await AuthSvc.GetCurrentUserAsync();
+            if (user != null) Nav.NavigateTo("/");
+        }
+        catch { /* not logged in */ }
+    }
+
+    private async Task HandleLogin()
+    {
+        error = null;
+        loading = true;
+        try
+        {
+            await AuthSvc.LoginAsync(model.Email, model.MotDePasse);
+            Nav.NavigateTo("/", true);
+        }
+        catch (ApiException ex)
+        {
+            error = ex.Message;
+        }
+        catch (Exception)
+        {
+            error = "Impossible de se connecter au serveur";
+        }
+        finally { loading = false; }
+    }
+}
