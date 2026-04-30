@@ -72,12 +72,6 @@ graph TD;
 
 ---
 
-## Auteurs
-
-- [Ton Nom]
-
----
-
 ## Licence
 
 MIT
