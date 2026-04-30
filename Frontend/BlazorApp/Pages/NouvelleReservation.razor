@@ -1,0 +1,109 @@
+@page "/nouvelle-reservation"
+@attribute [Authorize]
+@inject SallesService SallesSvc
+@inject MaterielsService MaterielsSvc
+@inject ReservationsService ReservationsSvc
+@inject NavigationManager Nav
+
+<PageTitle>Nouvelle réservation — YSync</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title">Nouvelle réservation</h1>
+    <p class="page-subtitle">Réservez une salle ou un matériel</p>
+</div>
+
+<div class="card" style="max-width:560px">
+    @if (error != null) { <div class="alert alert-error">@error</div> }
+
+    <div class="form-group">
+        <label class="form-label">Type de ressource</label>
+        <select class="form-select" @bind="resType">
+            <option value="salle">Salle</option>
+            <option value="materiel">Matériel</option>
+        </select>
+    </div>
+
+    @if (resType == "salle")
+    {
+        <div class="form-group">
+            <label class="form-label">Salle</label>
+            <select class="form-select" @bind="selectedSalleId">
+                <option value="0">— Choisir une salle —</option>
+                @foreach (var s in salles)
+                {
+                    <option value="@s.Id">@s.Nom (@s.Categorie, @s.Capacite places)</option>
+                }
+            </select>
+        </div>
+    }
+    else
+    {
+        <div class="form-group">
+            <label class="form-label">Matériel</label>
+            <select class="form-select" @bind="selectedMaterielId">
+                <option value="0">— Choisir un matériel —</option>
+                @foreach (var m in materiels)
+                {
+                    <option value="@m.Id">@m.Nom (@(m.Marque ?? "—"))</option>
+                }
+            </select>
+        </div>
+    }
+
+    <div class="form-group">
+        <label class="form-label">Date et heure de début</label>
+        <input type="datetime-local" class="form-input" @bind="dateDebut" />
+    </div>
+    <div class="form-group">
+        <label class="form-label">Date et heure de fin</label>
+        <input type="datetime-local" class="form-input" @bind="dateFin" />
+    </div>
+
+    <p class="text-sm text-muted mb-2">⏱ Max 4h · 🌙 Interdit entre 22h et 7h</p>
+
+    <button class="btn btn-primary btn-block" @onclick="Submit" disabled="@submitting">
+        @if (submitting) { <span>Réservation...</span> } else { <span>Réserver</span> }
+    </button>
+</div>
+
+@code {
+    private List<SalleDto> salles = new();
+    private List<MaterielDto> materiels = new();
+    private string resType = "salle";
+    private int selectedSalleId, selectedMaterielId;
+    private DateTime dateDebut = DateTime.Now.Date.AddHours(9);
+    private DateTime dateFin = DateTime.Now.Date.AddHours(10);
+    private string? error;
+    private bool submitting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            salles = await SallesSvc.GetAllAsync();
+            materiels = await MaterielsSvc.GetAllAsync();
+        }
+        catch { }
+    }
+
+    private async Task Submit()
+    {
+        error = null; submitting = true;
+        try
+        {
+            var dto = new ReservationCreateDto
+            {
+                DateDebut = dateDebut.ToString("yyyy-MM-ddTHH:mm:ss"),
+                DateFin = dateFin.ToString("yyyy-MM-ddTHH:mm:ss"),
+                SalleId = resType == "salle" && selectedSalleId > 0 ? selectedSalleId : null,
+                MaterielId = resType == "materiel" && selectedMaterielId > 0 ? selectedMaterielId : null
+            };
+            await ReservationsSvc.CreateAsync(dto);
+            Toast.ShowSuccess("Réservation créée !");
+            Nav.NavigateTo("/mes-reservations");
+        }
+        catch (ApiException ex) { error = ex.Message; }
+        catch { error = "Erreur de connexion au serveur"; }
+        finally { submitting = false; }
+    }
+}

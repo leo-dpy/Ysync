@@ -1,0 +1,67 @@
+@page "/register"
+@layout BlazorApp.Layout.MainLayout
+@inject AuthService AuthSvc
+@inject NavigationManager Nav
+
+<PageTitle>Inscription — YSync</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <div class="auth-logo-text"><span class="auth-logo-y">Y</span><span class="auth-logo-sync">Sync</span></div>
+        </div>
+        <p class="auth-subtitle">Créez votre compte</p>
+
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="alert alert-error">@error</div>
+        }
+        @if (!string.IsNullOrEmpty(success))
+        {
+            <div class="alert alert-success">@success</div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="HandleRegister">
+            <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input type="text" class="form-input" @bind="model.Nom" placeholder="Votre nom" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" @bind="model.Email" placeholder="votre@email.com" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <input type="password" class="form-input" @bind="model.MotDePasse" placeholder="••••••••" required />
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" disabled="@loading">
+                @if (loading) { <span>Inscription...</span> } else { <span>S'inscrire</span> }
+            </button>
+        </EditForm>
+
+        <div class="auth-footer">
+            Déjà un compte ? <a href="/login">Se connecter</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterRequest model = new();
+    private string? error;
+    private string? success;
+    private bool loading;
+
+    private async Task HandleRegister()
+    {
+        error = null; success = null; loading = true;
+        try
+        {
+            await AuthSvc.RegisterAsync(model.Nom, model.Email, model.MotDePasse);
+            success = "Compte créé ! Vous pouvez vous connecter.";
+            model = new();
+        }
+        catch (ApiException ex) { error = ex.Message; }
+        catch (Exception) { error = "Impossible de se connecter au serveur"; }
+        finally { loading = false; }
+    }
+}

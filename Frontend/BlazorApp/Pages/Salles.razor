@@ -1,0 +1,138 @@
+@page "/salles"
+@attribute [Authorize(Roles = "Admin")]
+@inject SallesService SallesSvc
+@inject NavigationManager Nav
+
+<PageTitle>Salles — YSync</PageTitle>
+
+<div class="flex-between mb-3">
+    <div class="page-header" style="margin-bottom:0">
+        <h1 class="page-title">Salles</h1>
+        <p class="page-subtitle">Gérez les salles disponibles</p>
+    </div>
+    <button class="btn btn-primary" @onclick="OpenCreate">+ Ajouter</button>
+</div>
+
+@if (loading)
+{
+    <p class="text-muted">Chargement...</p>
+}
+else if (!salles.Any())
+{
+    <div class="empty-state">
+        <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg></div>
+        <p class="empty-state-text">Aucune salle pour le moment</p>
+    </div>
+}
+else
+{
+    <div class="grid grid-3">
+        @foreach (var s in salles)
+        {
+            <div class="card">
+                <h3 style="margin-bottom:0.5rem">@s.Nom</h3>
+                <p class="text-muted text-sm mb-2">@s.Categorie · @(s.Capacite?.ToString() ?? "—") places</p>
+                <div class="flex flex-gap">
+                    <button class="btn btn-ghost btn-sm" @onclick="() => OpenEdit(s)">Modifier</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => AskDelete(s)">Supprimer</button>
+                    <a href="/nouvelle-reservation" class="btn btn-primary btn-sm">Réserver</a>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (showModal)
+{
+    <div class="modal-overlay" @onclick="CloseModal">
+        <div class="modal-content" @onclick:stopPropagation>
+            <h3 class="modal-title">@(editing != null ? "Modifier" : "Ajouter") une salle</h3>
+            <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input class="form-input" @bind="formNom" placeholder="Salle A1" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Catégorie</label>
+                <input class="form-input" @bind="formCategorie" placeholder="Réunion, Cours..." />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Capacité</label>
+                <input type="number" class="form-input" @bind="formCapacite" />
+            </div>
+            @if (formError != null) { <div class="alert alert-error">@formError</div> }
+            <div class="modal-actions">
+                <button class="btn btn-ghost" @onclick="CloseModal">Annuler</button>
+                <button class="btn btn-primary" @onclick="Save">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+}
+
+<ConfirmDialog Visible="showDeleteConfirm" Title="Supprimer la salle"
+    Message="@($"Supprimer « {deleting?.Nom} » ? Cette action est irréversible.")"
+    OnConfirm="ConfirmDelete" OnCancel="() => showDeleteConfirm = false" />
+
+@code {
+    private List<SalleDto> salles = new();
+    private bool loading = true, showModal, showDeleteConfirm;
+    private SalleDto? editing, deleting;
+    private string formNom = "", formCategorie = "", formError;
+    private int formCapacite;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try { salles = await SallesSvc.GetAllAsync(); } catch { }
+        loading = false;
+    }
+
+    private void OpenCreate()
+    {
+        editing = null; formNom = ""; formCategorie = ""; formCapacite = 10; formError = null;
+        showModal = true;
+    }
+
+    private void OpenEdit(SalleDto s)
+    {
+        editing = s; formNom = s.Nom; formCategorie = s.Categorie; formCapacite = s.Capacite ?? 0; formError = null;
+        showModal = true;
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private async Task Save()
+    {
+        formError = null;
+        try
+        {
+            if (editing != null)
+                await SallesSvc.UpdateAsync(editing.Id, new SalleUpdateDto { Nom = formNom, Categorie = formCategorie, Capacite = formCapacite });
+            else
+                await SallesSvc.CreateAsync(new SalleCreateDto { Nom = formNom, Categorie = formCategorie, Capacite = formCapacite });
+            showModal = false;
+            Toast.ShowSuccess(editing != null ? "Salle modifiée" : "Salle créée");
+            await LoadData();
+        }
+        catch (ApiException ex) { formError = ex.Message; }
+    }
+
+    private void AskDelete(SalleDto s) { deleting = s; showDeleteConfirm = true; }
+
+    private async Task ConfirmDelete()
+    {
+        showDeleteConfirm = false;
+        if (deleting == null) return;
+        try
+        {
+            await SallesSvc.DeleteAsync(deleting.Id);
+            Toast.ShowSuccess("Salle supprimée");
+            await LoadData();
+        }
+        catch (ApiException ex) { Toast.ShowError(ex.Message); }
+    }
+}
