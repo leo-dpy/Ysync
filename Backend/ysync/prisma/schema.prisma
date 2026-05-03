@@ -10,10 +10,10 @@ datasource db {
 model Materiel {
   Id          Int           @id @default(autoincrement())
   Nom         String        @db.VarChar(100)
-  Marque      String?       @db.VarChar(100)
   Caution     Decimal?      @db.Decimal(10, 2)
-  TagQrCode   String?       @unique(map: "TagQrCode") @db.VarChar(100)
   EstActif    Boolean       @default(true)
+  Marque      String?       @db.VarChar(100)
+  TagQrCode   String?       @unique(map: "TagQrCode") @db.VarChar(100)
   Reservation Reservation[]
 }
 
