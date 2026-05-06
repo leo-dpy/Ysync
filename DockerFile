@@ -93,7 +93,7 @@ stderr_logfile=/dev/stderr\n\
 stderr_logfile_maxbytes=0\n" > /etc/supervisord.conf
 
 # Exposition du port web standard
-EXPOSE 80
+EXPOSE 8080
 
 # Lancement de Supervisor
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
