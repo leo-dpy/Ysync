@@ -67,3 +67,9 @@ obj/
 *.dll
 *.pdb
 *.wasm
+
+# ==========================================
+# 6. BASE DE DONNÉES & DUMPS
+# ==========================================
+ysync_db.dump
+ysync_db_github
